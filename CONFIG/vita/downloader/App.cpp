@@ -19,7 +19,7 @@ App::App(paf::Framework* framework)
 {
 	App::instance = this;
 	this->framework = framework;
-	this->jobs = paf::job::JobQueue::default_queue;
+	this->jobs = paf::job::JobQueue::DefaultQueue();
 	this->current_page = nullptr;
 	this->installed_size = 0;
 	this->loadPlugin();
@@ -108,33 +108,30 @@ void App::LoadConfig()
 
 void App::ScanFolders()
 {
+	this->found_any_files = false;
 	this->installed_size = 0;
-	this->missing_cd.clear();
-	this->missing_disk.clear();
-	this->found_cd_files.clear();
-	this->found_disk_files.clear();
+	this->missing_files.clear();
+	paf::vector<paf::string> found_cd_files;
+    paf::vector<paf::string> found_disk_files;
 
-	listFilesRecursive(this->cd_folder, "", this->found_cd_files);
-	listFilesRecursive(this->disk_folder, "", this->found_disk_files);
-	sceClibPrintf("Found %d cd files, %d disk files\n", this->found_cd_files.size(), this->found_disk_files.size());
+	listFilesRecursive(this->cd_folder, "", found_cd_files);
+	listFilesRecursive(this->disk_folder, "", found_disk_files);
+	sceClibPrintf("Found %d cd files, %d disk files\n", found_cd_files.size(), found_disk_files.size());
 
 	for (const GameFile& file : gameFiles) {
-		paf::vector<paf::string>* found_files =
-			(file.folder == DIR_CD) ? &this->found_cd_files : &this->found_disk_files;
-		paf::vector<const GameFile*>* missing_files = (file.folder == DIR_CD) ? &this->missing_cd : &this->missing_disk;
-
+		paf::vector<paf::string>* found_files = (file.folder == DIR_CD) ? &found_cd_files : &found_disk_files;
 		bool missing = paf::find(found_files->begin(), found_files->end(), file.filename) == found_files->end();
 		if (missing || always_download) {
-			missing_files->push_back(&file);
+			this->missing_files.push_back(&file);
 		}
 		else {
 			this->installed_size += file.size;
+			this->found_any_files = true;
 		}
 	}
 	sceClibPrintf(
-		"Missing %d cd files, %d disk files\ninstalled_size: %lld\n",
-		this->missing_cd.size(),
-		this->missing_disk.size(),
+		"Missing %d files\ninstalled_size: %lld\n",
+		this->missing_files.size(),
 		this->installed_size
 	);
 }
@@ -147,8 +144,7 @@ void App::OpenStartup()
 	}
 	data_todo -= this->installed_size;
 
-	bool anyDownloaded = this->found_cd_files.size() + this->found_disk_files.size() > 0;
-	bool allDownloaded = this->missing_cd.size() + this->missing_disk.size() == 0;
+	bool allDownloaded = this->missing_files.size() == 0;
 
 	StartupPage* startupPage = new StartupPage(data_todo, this->cd_folder, this->disk_folder);
 	startupPage->OnDownloadButton = [this, startupPage, allDownloaded, data_todo]() {
@@ -193,10 +189,10 @@ void App::OpenStartup()
 		this->OpenDownload();
 	};
 
-	startupPage->OnVerifyButton = [this, startupPage, anyDownloaded]() {
+	startupPage->OnVerifyButton = [this, startupPage]() {
 		ScopeLockMain lock();
 
-		if (!anyDownloaded) {
+		if (!this->found_any_files) {
 			auto dialog = new Dialog();
 			dialog->SetTitle("Nothing Installed");
 			dialog->SetText("No Game Files found\nNothing to Verify.");
@@ -214,10 +210,7 @@ void App::OpenStartup()
 void App::OpenDownload()
 {
 	uint64_t download_size = 0;
-	for (const auto& file : this->missing_cd) {
-		download_size += file->size;
-	}
-	for (const auto& file : this->missing_disk) {
+	for (const auto& file : this->missing_files) {
 		download_size += file->size;
 	}
 
@@ -225,21 +218,12 @@ void App::OpenDownload()
 	this->SwitchPage(downloadPage, [this, downloadPage]() {
 		paf::vector<DownloadFile> downloadFiles;
 
-		for(const auto& gameFile : this->missing_cd) {
-			paf::string url = paf::string(download_server) + "cd/" + gameFile->filename;
+		for(const auto& gameFile : this->missing_files) {
+			paf::string folder = gameFile->folder == DIR_CD ? "cd/" : "disk/";
+			paf::string url = paf::string(download_server) + folder + gameFile->filename;
 			downloadFiles.push_back(DownloadFile{
 				.url = url,
 				.directory = this->cd_folder,
-				.filename = gameFile->filename,
-				.size = gameFile->size
-			});
-		}
-
-		for(const auto& gameFile : this->missing_disk) {
-			paf::string url = paf::string(download_server) + "disk/" + gameFile->filename;
-			downloadFiles.push_back(DownloadFile{
-				.url = url,
-				.directory = this->disk_folder,
 				.filename = gameFile->filename,
 				.size = gameFile->size
 			});
@@ -300,9 +284,12 @@ void App::OpenVerify()
 			verifyPage->UpdateFile(filename);
 		};
 
-		verifyJob->OnProgress = [verifyPage](uint64_t bytes, float total, float file) {
+		verifyJob->OnProgress = [this, verifyPage](uint64_t total_done, uint64_t file_done, uint64_t file_size) {
 			ScopeLockMain lock();
-			verifyPage->UpdateProgress(bytes, total, file);
+			float total_progress = (float)(total_done) / (float)(this->installed_size) * 100;
+			float file_progress = (float)(file_done) / (float)(file_size) * 100;
+			sceClibPrintf("Progress: %f%% %f%%\n", total_progress, file_progress);
+			verifyPage->UpdateProgress(total_done, total_progress, file_progress);
 		};
 
 		verifyJob->OnComplete = [this, verifyPage](paf::vector<VerifyResult>& results) {

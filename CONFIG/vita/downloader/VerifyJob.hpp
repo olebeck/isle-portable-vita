@@ -23,13 +23,13 @@ class VerifyJob : public paf::job::JobItem {
 
     int verifyFile(const GameFile& file, EVerifyResult& result, std::function<void(uint64_t, float)> OnFileProgress);
 public:
-    std::function<void(paf::string)> OnFileStart;
-    std::function<void(uint64_t, float, float)> OnProgress;
+    std::function<void(const paf::string&)> OnFileStart;
+    std::function<void(uint64_t, uint64_t, uint64_t)> OnProgress;
     std::function<void(paf::vector<VerifyResult>&)> OnComplete;
 
     VerifyJob(const paf::string& cdFolder, const paf::string& diskFolder);
     
-    void Run() override;
+    int32_t Run() override;
     void Cancel() override {};
-    void Finish() override {};
+    void Finish(int32_t result) override {};
 };

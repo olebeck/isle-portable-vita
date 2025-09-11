@@ -34,7 +34,6 @@ int VerifyJob::verifyFile(
 	crypto_hash_sha256_state state;
 	crypto_hash_sha256_init(&state);
 	uint64_t file_done = 0;
-	int prev_percent = -1;
 	while (true) {
 		int ret = sceIoRead(fd, buffer.data(), buffer.size());
 		if (ret < 0) {
@@ -46,12 +45,7 @@ int VerifyJob::verifyFile(
 		}
 		crypto_hash_sha256_update(&state, buffer.data(), ret);
 		file_done += ret;
-
-		int new_percent = (float) file_done / (float) file.size * 100;
-		if (prev_percent != new_percent) {
-			OnFileProgress(file_done, new_percent);
-		}
-		prev_percent = new_percent;
+		OnFileProgress(file_done, file.size);
 	}
 	sceIoClose(fd);
 
@@ -69,26 +63,16 @@ int VerifyJob::verifyFile(
 	return 0;
 }
 
-void VerifyJob::Run()
+int32_t VerifyJob::Run()
 {
 	paf::vector<VerifyResult> results;
-	uint64_t total_size = 0;
 	uint64_t total_done = 0;
-
-	for (const auto& file : gameFiles) {
-		total_size += file.size;
-	}
 
 	for (const auto& file : gameFiles) {
 		this->OnFileStart(file.filename);
 
-		uint64_t file_done = 0;
-		auto OnFileProgress = [this, &total_done, &file_done, total_size](uint64_t done, float file_percent) {
-			uint64_t added = done - file_done;
-			total_done += added;
-			file_done = done;
-			float total_percent = ((float) total_done / (float) total_size) * 100;
-			this->OnProgress(total_done, total_percent, file_percent);
+		auto OnFileProgress = [this, total_done](uint64_t file_done, uint64_t file_size) {
+			this->OnProgress(total_done+file_done, file_done, file_size);
 		};
 
 		sceClibPrintf("verifying: %s\n", file.filename.c_str());
@@ -101,7 +85,9 @@ void VerifyJob::Run()
 			verifyResult.result = EVerifyResult::ERROR;
 		}
 		results.push_back(verifyResult);
+		total_done += file.size;
 	}
 
 	this->OnComplete(results);
+	return 0;
 }

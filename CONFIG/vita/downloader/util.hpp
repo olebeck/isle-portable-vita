@@ -4,10 +4,10 @@
 
 class ScopeLockMain {
     ScopeLockMain() {
-        paf::thread::RMutex::main_thread_mutex.Lock();
+        paf::thread::RMutex::MainThreadMutex()->Lock();
     };
     ~ScopeLockMain() {
-        paf::thread::RMutex::main_thread_mutex.Unlock();
+        paf::thread::RMutex::MainThreadMutex()->Unlock();
     }
 };
 
