@@ -50,12 +50,12 @@ void VerifyPage::UpdateFile(const paf::string& filename)
 	this->updateDialogText();
 }
 
-void VerifyPage::UpdateProgress(uint64_t bytes, float total, float file)
+void VerifyPage::UpdateProgress(uint64_t total_done, float total_progress, float file_progress)
 {
-	this->progress_bar_total->SetValue(total, true);
-	this->progress_bar_file->SetValue(file, true);
+	this->progress_bar_total->SetValue(total_progress, true);
+	this->progress_bar_file->SetValue(file_progress, true);
 
-	int current_mb = bytes / 1000000;
+	int current_mb = total_done / 1000000;
 	if (current_mb != this->mb_done) {
 		this->mb_done = current_mb;
 		this->updateDialogText();

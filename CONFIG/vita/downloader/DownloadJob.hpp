@@ -25,7 +25,7 @@ public:
     DownloadJob(const paf::string& baseUrl, const paf::vector<DownloadFile>& files);
     ~DownloadJob();
 
-    void Run() override;
+    int32_t Run() override;
     void Cancel() override {};
-    void Finish() override {};
+    void Finish(int32_t result) override {};
 };

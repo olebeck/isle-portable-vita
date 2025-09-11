@@ -108,7 +108,7 @@ DownloadJob::~DownloadJob()
 	sceHttpDeleteConnection(this->conn);
 }
 
-void DownloadJob::Run()
+int32_t DownloadJob::Run()
 {
 	uint64_t total_size = 0;
 	uint64_t total_downloaded = 0;
@@ -137,4 +137,5 @@ void DownloadJob::Run()
 	}
 
 	this->OnComplete(total_downloaded);
+	return 0;
 }

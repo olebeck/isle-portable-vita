@@ -16,10 +16,8 @@ class App {
 
     paf::string cd_folder;
     paf::string disk_folder;
-    paf::vector<paf::string> found_cd_files;
-    paf::vector<paf::string> found_disk_files;
-    paf::vector<const GameFile*> missing_cd;
-    paf::vector<const GameFile*> missing_disk;
+    bool found_any_files;
+    paf::vector<const GameFile*> missing_files;
     paf::vector<VerifyResult> verify_results;
     uint64_t free_space;
     uint64_t installed_size;
