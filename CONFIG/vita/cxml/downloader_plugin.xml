@@ -19,6 +19,7 @@
       </page>
 
       <page id="StartupPage">
+        <!-- TODO: add text, background image -->
         <box style="_common_default_style_box">
           <layout_box space="20" layout_type="2" />
           <button id="download_button" style="_common_default_style_button" label="msg_download">

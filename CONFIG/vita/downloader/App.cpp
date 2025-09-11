@@ -219,11 +219,12 @@ void App::OpenDownload()
 		paf::vector<DownloadFile> downloadFiles;
 
 		for(const auto& gameFile : this->missing_files) {
-			paf::string folder = gameFile->folder == DIR_CD ? "cd/" : "disk/";
-			paf::string url = paf::string(download_server) + folder + gameFile->filename;
+			// always uppercase LEGO, even on cd
+			paf::string url = paf::string(download_server) + "LEGO/" + gameFile->filename.substr(5, gameFile->filename.size());
+			paf::string directory = gameFile->folder == DIR_CD ? this->cd_folder : this->disk_folder;
 			downloadFiles.push_back(DownloadFile{
 				.url = url,
-				.directory = this->cd_folder,
+				.directory = directory,
 				.filename = gameFile->filename,
 				.size = gameFile->size
 			});
@@ -356,7 +357,7 @@ void App::FixBroken()
 		}
 
 		const paf::string& folder = result.gameFile->folder == DIR_CD ? this->cd_folder : this->disk_folder;
-		paf::string filename = folder + "/" + result.gameFile->filename;
+		paf::string filename = folder + result.gameFile->filename;
 		sceIoRemove(filename.c_str());
 	}
 
