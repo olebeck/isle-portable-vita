@@ -910,12 +910,15 @@ if(VITA)
 
   vita_create_vpk(isle.vpk ${VITA_TITLEID} isle.self
     FILE "${CMAKE_CURRENT_BINARY_DIR}/CONFIG/vita/isle-config.self" isle-config.self
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/CONFIG/vita/isle-downloader.self" isle-downloader.self
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/CONFIG/vita/downloader_plugin.rco" downloader_plugin.rco
     FILE "${CMAKE_CURRENT_BINARY_DIR}/CONFIG/vita/config_plugin.rco" config_plugin.rco
     VERSION ${VITA_VERSION}
     NAME ${VITA_APP_NAME}
     ${VPK_FILE_ARGS}
   )
   add_dependencies(isle.vpk-vpk config_plugin.rco_target)
+  add_dependencies(isle.vpk-vpk downloader_plugin.rco_target)
 endif()
 
 if(MSVC OR IOS)

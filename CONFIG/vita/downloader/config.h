@@ -1,0 +1,10 @@
+
+static const char* default_cd_path = "ux0:data/isledecomp/isle/cd";
+static const char* default_disk_path = "ux0:data/isledecomp/isle/disk";
+
+static const char* download_server = "http://192.168.178.72:8000/";
+
+static const int MIN_FREE_SPACE = 50_MiB;
+static const bool disable_install_check = false;
+static const bool always_download = false;
+static const bool disable_free_space_check = false;
