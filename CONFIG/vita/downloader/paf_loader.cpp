@@ -6,6 +6,7 @@
 #include <psp2/net/net.h>
 #include <psp2/net/netctl.h>
 #include <psp2/sysmodule.h>
+#include <psp2/libssl.h>
 
 char sceUserMainThreadName[] = "isle_downloader";
 int sceUserMainThreadPriority = 0x10000100;
@@ -84,6 +85,9 @@ extern "C" int module_start(SceSize args, void* argp)
 
 	sceSysmoduleLoadModule(SCE_SYSMODULE_HTTP);
 	sceHttpInit(1 * 1024 * 1024);
+
+	sceSysmoduleLoadModule(SCE_SYSMODULE_HTTPS);
+	sceSslInit(100 * 1024);
 
 	for (void (**p)() = &__init_array_start; p < &__init_array_end; ++p) {
 		(*p)();

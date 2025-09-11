@@ -115,6 +115,7 @@ target_link_libraries(isle-downloader PRIVATE
   SceHttp_stub
   SceNet_stub
   SceNetCtl_stub
+  SceSsl_stub
   # paf
   ScePafToplevel_stub
   ScePafResource_stub

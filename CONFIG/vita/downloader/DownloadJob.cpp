@@ -42,16 +42,17 @@ static int SaveToFile(int reqId, const paf::string& filename, std::function<void
 static int DoDownload(const DownloadFile& file, int connId, paf::string& errorMessage, std::function<void(uint64_t)> OnProgress) {
 	char buf[0x100];
 	sceClibPrintf("Downloading: %s\n", file.filename.c_str());
-	paf::string filepath = file.directory + "/" + file.filename;
+	paf::string filepath = file.directory + file.filename;
 	paf::string tmpPath = filepath + ".tmp";
 
-	int ret = mkdirAll(file.directory);
+	int ret = mkdirAll(removeFileName(filepath));
 	if (ret < 0) {
 		errorMessage = "failed to mkdir";
 		return ret;
 	}
 
 	// create request
+	sceClibPrintf("Get: %s\n", file.url.c_str());
 	int reqId = sceHttpCreateRequestWithURL(connId, SCE_HTTP_METHOD_GET, file.url.c_str(), 0);
 	if (reqId < 0) {
 		errorMessage = "failed to create request";
