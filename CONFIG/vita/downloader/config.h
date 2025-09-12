@@ -1,3 +1,6 @@
+#pragma once
+
+#include "util.hpp"
 
 static const char* default_cd_path = "ux0:data/isledecomp/isle/cd";
 static const char* default_disk_path = "ux0:data/isledecomp/isle/disk";

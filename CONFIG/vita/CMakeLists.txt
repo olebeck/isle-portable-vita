@@ -135,6 +135,7 @@ target_link_libraries(isle-downloader PRIVATE
   ScePafStdc_stub
   ScePafThread_stub
   ScePafMisc_stub
+  SceCommonGuiDialog_stub
   # other
   iniparser_paf
   gcc

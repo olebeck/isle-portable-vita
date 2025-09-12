@@ -1,88 +1,274 @@
+// From NetStream, by @GrapheneCt
+
 #include "Dialog.hpp"
 
-#include "util.hpp"
+#include <common_gui_dialog.h>
+#include <paf.h>
 
-#include <psp2/kernel/clib.h>
+#define CURRENT_DIALOG_NONE -1
 
-Dialog::~Dialog()
+static SceInt32 s_currentDialog = CURRENT_DIALOG_NONE;
+static std::function<void(dialog::ButtonCode)> s_buttonCallback = nullptr;
+
+static SceUInt32 s_twoButtonContTable[12];
+static SceUInt32 s_threeButtonContTable[16];
+
+static void CommonGuiEventHandler(SceInt32 instanceSlot, sce::CommonGuiDialog::DIALOG_CB buttonCode, ScePVoid pUserArg)
 {
-	sceClibPrintf("Dialog::~Dialog\n");
-}
+	sce::CommonGuiDialog::Dialog::Close(instanceSlot);
+	s_currentDialog = CURRENT_DIALOG_NONE;
 
-void Dialog::ButtonCallback(int32_t type, paf::ui::Handler* self, paf::ui::Event* e, void* userdata)
-{
-	Dialog* dialog = static_cast<Dialog*>(userdata);
-	if (self == dialog->dialog_button1) {
-		if (dialog->button1_click) {
-			dialog->button1_click();
-		}
+	if (s_buttonCallback) {
+		s_buttonCallback((dialog::ButtonCode) buttonCode);
+		s_buttonCallback = nullptr;
 	}
-	else {
-		if (dialog->button2_click) {
-			dialog->button2_click();
-		}
+}
+
+void OpenDialog(
+	paf::Plugin* workPlugin,
+	const wchar_t* titleText,
+	const wchar_t* messageText,
+	sce::CommonGuiDialog::Param* dialogParam,
+	std::function<void(dialog::ButtonCode)> onClick
+)
+{
+	if (s_currentDialog != CURRENT_DIALOG_NONE) {
+		return;
 	}
-	dialog->dialog_box->Hide(paf::common::transition::Type_Popup5, 0, Dialog::HideCallback, dialog);
-}
 
-void Dialog::HideCallback(int32_t type, paf::ui::Handler* self, paf::ui::Event* e, void* userdata)
-{
-	sceClibPrintf("HideCallback\n");
-	// Dialog* dialog = static_cast<Dialog*>(userdata);
-	// dialog->dialog_box->GetParent()->RemoveChild(dialog->dialog_box); // crashes for some reason when switching pages
-}
-
-void Dialog::SetTitle(const paf::string& title)
-{
-	this->title = title;
-}
-
-void Dialog::SetText(const paf::string& text)
-{
-	this->text = text;
-}
-
-void Dialog::SetButton1(const paf::string& text, const std::function<void()> click)
-{
-	this->button1_text = text;
-	this->button1_click = click;
-}
-
-void Dialog::SetButton2(const paf::string& text, const std::function<void()> click)
-{
-	this->button2_text = text;
-	this->button2_click = click;
-}
-
-void Dialog::Show(paf::Plugin* plugin, paf::ui::Widget* parent)
-{
-	paf::Plugin::TemplateOpenParam openParam;
-	plugin->TemplateOpen(parent, "_common_template_dialog_base", openParam);
-	this->dialog_box = parent->GetChild(parent->GetChildrenNum() - 1);
-	this->dialog_box->SetUserData2(this, 0);
-	this->dialog_box->SetName(rand()); // multiple dialogs with same id crashes
-
-	bool twoButton = !this->button2_text.empty();
-	paf::IDParam templateId = twoButton ? "_common_template_t1b2_dialog" : "_common_template_t1b1_dialog";
-	plugin->TemplateOpen(this->dialog_box, templateId, openParam);
-	auto dialog = this->dialog_box->GetChild(this->dialog_box->GetChildrenNum() - 1);
-
-	auto dialog_title = static_cast<paf::ui::Text*>(dialog->FindChild("dialog_title"));
-	auto dialog_text = dialog->FindChild("dialog_text1");
-
-	dialog_title->SetString(StringToWString(this->title));
-	dialog_text->SetString(StringToWString(this->text));
-
-	this->dialog_button1 = static_cast<paf::ui::Button*>(dialog->FindChild("dialog_button1"));
-	this->dialog_button1->AddEventCallback(paf::ui::ButtonBase::CB_BTN_DECIDE, Dialog::ButtonCallback, this);
-	this->dialog_button1->SetString(StringToWString(this->button1_text));
-
-	if (twoButton) {
-		this->dialog_button2 = static_cast<paf::ui::Button*>(dialog->FindChild("dialog_button2"));
-		this->dialog_button2->AddEventCallback(paf::ui::ButtonBase::CB_BTN_DECIDE, Dialog::ButtonCallback, this);
-		this->dialog_button2->SetString(StringToWString(this->button2_text));
+	paf::wstring title;
+	paf::wstring* pTitle = nullptr;
+	if (titleText != nullptr) {
+		title = titleText;
+		pTitle = &title;
 	}
-	dialog->Show();
 
-	this->dialog_box->Show(paf::common::transition::Type_Popup1);
+	paf::wstring message;
+	paf::wstring* pMessage = nullptr;
+	if (messageText != nullptr) {
+		message = messageText;
+		pMessage = &message;
+	}
+
+	s_buttonCallback = onClick;
+	bool isMainThread = paf::thread::ThreadIDCache::Check(paf::thread::ThreadIDCache::Type_Main);
+	if (!isMainThread) {
+		paf::thread::RMutex::MainThreadMutex()->Lock();
+	}
+	s_currentDialog =
+		sce::CommonGuiDialog::Dialog::Show(workPlugin, pTitle, pMessage, dialogParam, CommonGuiEventHandler, nullptr);
+	if (!isMainThread) {
+		paf::thread::RMutex::MainThreadMutex()->Unlock();
+	}
+}
+
+void dialog::OpenPleaseWait(
+	paf::Plugin* workPlugin,
+	const wchar_t* titleText,
+	const wchar_t* messageText,
+	bool withCancel,
+	std::function<void(dialog::ButtonCode)> onClick
+)
+{
+	sce::CommonGuiDialog::Param* dialogParam = withCancel ? &sce::CommonGuiDialog::Param::s_dialogCancelBusy
+														  : &sce::CommonGuiDialog::Param::s_dialogTextSmallBusy;
+	OpenDialog(workPlugin, titleText, messageText, dialogParam, onClick);
+}
+
+void dialog::OpenYesNo(
+	paf::Plugin* workPlugin,
+	const wchar_t* titleText,
+	const wchar_t* messageText,
+	std::function<void(dialog::ButtonCode)> onClick
+)
+{
+	OpenDialog(workPlugin, titleText, messageText, &sce::CommonGuiDialog::Param::s_dialogYesNo, onClick);
+}
+
+void dialog::OpenOk(
+	paf::Plugin* workPlugin,
+	const wchar_t* titleText,
+	const wchar_t* messageText,
+	std::function<void(dialog::ButtonCode)> onClick
+)
+{
+	OpenDialog(workPlugin, titleText, messageText, &sce::CommonGuiDialog::Param::s_dialogOk, onClick);
+}
+
+void dialog::OpenError(
+	paf::Plugin* workPlugin,
+	SceInt32 errorCode,
+	const wchar_t* messageText,
+	std::function<void(dialog::ButtonCode)> onClick
+)
+{
+	if (s_currentDialog != CURRENT_DIALOG_NONE) {
+		return;
+	}
+
+	sce::CommonGuiDialog::ErrorDialog dialog;
+	dialog.work_plugin = workPlugin;
+	dialog.error = errorCode;
+	dialog.listener = new sce::CommonGuiDialog::EventCBListener(CommonGuiEventHandler, nullptr);
+	dialog.message = messageText;
+
+	s_buttonCallback = onClick;
+	bool isMainThread = paf::thread::ThreadIDCache::Check(paf::thread::ThreadIDCache::Type_Main);
+	if (!isMainThread) {
+		paf::thread::RMutex::MainThreadMutex()->Lock();
+	}
+	s_currentDialog = dialog.Show();
+	if (!isMainThread) {
+		paf::thread::RMutex::MainThreadMutex()->Unlock();
+	}
+}
+
+void dialog::OpenThreeButton(
+	paf::Plugin* workPlugin,
+	const wchar_t* titleText,
+	const wchar_t* messageText,
+	uint32_t button1TextHashref,
+	uint32_t button2TextHashref,
+	uint32_t button3TextHashref,
+	std::function<void(dialog::ButtonCode)> onClick
+)
+{
+	sce::CommonGuiDialog::Param dialogParam = sce::CommonGuiDialog::Param::s_dialogYesNoCancel;
+	sce_paf_memcpy(
+		s_threeButtonContTable,
+		sce::CommonGuiDialog::Param::s_dialogYesNoCancel.contents_list,
+		sizeof(s_threeButtonContTable)
+	);
+	s_threeButtonContTable[1] = button1TextHashref;
+	s_threeButtonContTable[5] = button2TextHashref;
+	s_threeButtonContTable[9] = button3TextHashref;
+	s_threeButtonContTable[7] = 0x20413274;
+	s_threeButtonContTable[11] = 0x20413274;
+	dialogParam.contents_list = (sce::CommonGuiDialog::ContentsHashTable*) s_threeButtonContTable;
+
+	OpenDialog(workPlugin, titleText, messageText, &dialogParam, onClick);
+}
+
+void dialog::OpenTwoButton(
+	paf::Plugin* workPlugin,
+	const wchar_t* titleText,
+	const wchar_t* messageText,
+	uint32_t button1TextHashref,
+	uint32_t button2TextHashref,
+	std::function<void(dialog::ButtonCode)> onClick
+)
+{
+	sce::CommonGuiDialog::Param dialogParam = sce::CommonGuiDialog::Param::s_dialogYesNo;
+	sce_paf_memcpy(
+		s_twoButtonContTable,
+		sce::CommonGuiDialog::Param::s_dialogYesNo.contents_list,
+		sizeof(s_twoButtonContTable)
+	);
+	s_twoButtonContTable[1] = button2TextHashref;
+	s_twoButtonContTable[5] = button1TextHashref;
+	s_twoButtonContTable[3] = 0x20413274;
+	dialogParam.contents_list = (sce::CommonGuiDialog::ContentsHashTable*) s_twoButtonContTable;
+
+	OpenDialog(workPlugin, titleText, messageText, &dialogParam, onClick);
+}
+
+paf::ui::ListView* dialog::OpenListView(
+	paf::Plugin* workPlugin,
+	const wchar_t* titleText,
+	std::function<void(dialog::ButtonCode)> onClick
+)
+{
+	if (s_currentDialog != CURRENT_DIALOG_NONE) {
+		return nullptr;
+	}
+
+	s_buttonCallback = onClick;
+
+	bool isMainThread = paf::thread::ThreadIDCache::Check(paf::thread::ThreadIDCache::Type_Main);
+	if (!isMainThread) {
+		paf::thread::RMutex::MainThreadMutex()->Lock();
+	}
+
+	paf::wstring title = titleText;
+
+	s_currentDialog = sce::CommonGuiDialog::Dialog::Show(
+		workPlugin,
+		&title,
+		nullptr,
+		&sce::CommonGuiDialog::Param::s_dialogXLView,
+		CommonGuiEventHandler,
+		nullptr
+	);
+	paf::ui::Widget* ret =
+		sce::CommonGuiDialog::Dialog::GetWidget(s_currentDialog, sce::CommonGuiDialog::REGISTER_ID_LIST_VIEW);
+
+	if (!isMainThread) {
+		paf::thread::RMutex::MainThreadMutex()->Unlock();
+	}
+
+	return (paf::ui::ListView*) ret;
+}
+
+paf::ui::ScrollView* dialog::OpenScrollView(
+	paf::Plugin* workPlugin,
+	const wchar_t* titleText,
+	std::function<void(dialog::ButtonCode)> onClick
+)
+{
+	if (s_currentDialog != CURRENT_DIALOG_NONE) {
+		return nullptr;
+	}
+
+	s_buttonCallback = onClick;
+
+	bool isMainThread = paf::thread::ThreadIDCache::Check(paf::thread::ThreadIDCache::Type_Main);
+	if (!isMainThread) {
+		paf::thread::RMutex::MainThreadMutex()->Lock();
+	}
+
+	paf::wstring title = titleText;
+
+	s_currentDialog = sce::CommonGuiDialog::Dialog::Show(
+		workPlugin,
+		&title,
+		nullptr,
+		&sce::CommonGuiDialog::Param::s_dialogXView,
+		CommonGuiEventHandler,
+		nullptr
+	);
+	paf::ui::Widget* ret =
+		sce::CommonGuiDialog::Dialog::GetWidget(s_currentDialog, sce::CommonGuiDialog::REGISTER_ID_SCROLL_VIEW);
+
+	if (!isMainThread) {
+		paf::thread::RMutex::MainThreadMutex()->Unlock();
+	}
+
+	return (paf::ui::ScrollView*) ret;
+}
+
+void dialog::Close()
+{
+	if (s_currentDialog == CURRENT_DIALOG_NONE) {
+		return;
+	}
+
+	sce::CommonGuiDialog::Dialog::Close(s_currentDialog);
+	s_currentDialog = CURRENT_DIALOG_NONE;
+	s_buttonCallback = nullptr;
+}
+
+void dialog::WaitEnd()
+{
+	if (s_currentDialog == CURRENT_DIALOG_NONE) {
+		return;
+	}
+
+	while (s_currentDialog != CURRENT_DIALOG_NONE) {
+		paf::thread::Sleep(100);
+	}
+}
+
+int dialog::Current()
+{
+	return s_currentDialog;
 }

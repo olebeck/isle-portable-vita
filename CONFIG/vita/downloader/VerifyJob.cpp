@@ -72,7 +72,7 @@ int32_t VerifyJob::Run()
 		this->OnFileStart(file.filename);
 
 		auto OnFileProgress = [this, total_done](uint64_t file_done, uint64_t file_size) {
-			this->OnProgress(total_done+file_done, file_done, file_size);
+			this->OnProgress(total_done + file_done, file_done, file_size);
 		};
 
 		sceClibPrintf("verifying: %s\n", file.filename.c_str());

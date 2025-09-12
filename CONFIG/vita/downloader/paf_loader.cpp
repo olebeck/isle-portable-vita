@@ -2,11 +2,11 @@
 #include <psp2/kernel/clib.h>
 #include <psp2/kernel/modulemgr.h>
 #include <psp2/kernel/processmgr.h>
+#include <psp2/libssl.h>
 #include <psp2/net/http.h>
 #include <psp2/net/net.h>
 #include <psp2/net/netctl.h>
 #include <psp2/sysmodule.h>
-#include <psp2/libssl.h>
 
 char sceUserMainThreadName[] = "isle_downloader";
 int sceUserMainThreadPriority = 0x10000100;
@@ -72,6 +72,8 @@ extern "C" int module_start(SceSize args, void* argp)
 			load_res
 		);
 	}
+
+	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_COMMON_GUI_DIALOG);
 
 	sceSysmoduleLoadModule(SCE_SYSMODULE_NET);
 

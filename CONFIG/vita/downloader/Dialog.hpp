@@ -1,33 +1,82 @@
 #pragma once
 
 #include <paf.h>
+#include <common_gui_dialog.h>
 
-class Dialog : public paf::ui::Widget::UserData {
-private:
-    paf::string title;
-    paf::string text;
-    paf::string button1_text;
-    paf::string button2_text;
-    std::function<void()> button1_click;
-    std::function<void()> button2_click;
+namespace dialog
+{
+	enum ButtonCode
+	{
+		ButtonCode_X = 1,
+		ButtonCode_Ok,
+		ButtonCode_Cancel,
+		ButtonCode_Yes,
+		ButtonCode_No,
+		ButtonCode_Button1 = ButtonCode_Yes,
+		ButtonCode_Button2 = ButtonCode_No,
+		ButtonCode_Button3 = ButtonCode_Cancel
+	};
 
-    paf::ui::Widget* parent;
-    paf::ui::Widget* dialog_box;
-    paf::ui::Button* dialog_button1;
-    paf::ui::Button* dialog_button2;
+    int Current();
 
-    static void ButtonCallback(int32_t type, paf::ui::Handler *self, paf::ui::Event *e, void *userdata);
-    static void HideCallback(int32_t type, paf::ui::Handler *self, paf::ui::Event *e, void *userdata);
-public:
+	void OpenPleaseWait(
+        paf::Plugin *workPlugin,
+        const wchar_t* titleText,
+        const wchar_t* messageText,
+        bool withCancel = false,
+        std::function<void(ButtonCode)> onClick = nullptr
+    );
 
-    Dialog() = default;
-    virtual ~Dialog();
+	void OpenYesNo(paf::Plugin *workPlugin, 
+        const wchar_t* titleText, 
+        const wchar_t* messageText, 
+        std::function<void(ButtonCode)> onClick = nullptr
+    );
 
-    void SetTitle(const paf::string& title);
-    void SetText(const paf::string& text);
+	void OpenOk(paf::Plugin *workPlugin, 
+        const wchar_t* titleText, 
+        const wchar_t* messageText, 
+        std::function<void(ButtonCode)> onClick = nullptr
+    );
 
-    void SetButton1(const paf::string& text, const std::function<void()> click = nullptr);
-    void SetButton2(const paf::string& text, const std::function<void()> click = nullptr);
+	void OpenError(paf::Plugin *workPlugin, 
+        SceInt32 errorCode, 
+        const wchar_t* messageText, 
+        std::function<void(ButtonCode)> onClick = nullptr
+    );
 
-    void Show(paf::Plugin* plugin, paf::ui::Widget* parent);
+	void OpenTwoButton(
+		paf::Plugin *workPlugin,
+		const wchar_t* titleText,
+		const wchar_t* messageText,
+		uint32_t button1TextHashref,
+		uint32_t button2TextHashref,
+		std::function<void(ButtonCode)> onClick = nullptr
+    );
+
+	void OpenThreeButton(
+		paf::Plugin *workPlugin,
+		const wchar_t* titleText,
+		const wchar_t* messageText,
+		uint32_t button1TextHashref,
+		uint32_t button2TextHashref,
+		uint32_t button3TextHashref,
+		std::function<void(ButtonCode)> onClick = nullptr
+    );
+
+	paf::ui::ListView *OpenListView(
+		paf::Plugin *workPlugin,
+		const wchar_t* titleText,
+		std::function<void(ButtonCode)> onClick = nullptr
+    );
+
+	paf::ui::ScrollView *OpenScrollView(
+		paf::Plugin *workPlugin,
+		const wchar_t* titleText,
+		std::function<void(ButtonCode)> onClick = nullptr
+    );
+
+	void Close();
+
+	void WaitEnd();
 };

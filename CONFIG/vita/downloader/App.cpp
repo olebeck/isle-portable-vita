@@ -6,8 +6,8 @@
 #include "StartupPage.hpp"
 #include "VerifyJob.hpp"
 #include "VerifyPage.hpp"
-#include "util.hpp"
 #include "config.h"
+#include "util.hpp"
 
 #include <iniparser.h>
 #include <psp2/appmgr.h>
@@ -46,6 +46,8 @@ void App::startFunc(paf::Plugin* plugin)
 	app->LoadConfig();
 	app->free_space = GetFreeSpace("ux0:");
 	app->ScanFolders();
+	paf::Plugin::PageOpenParam openParam;
+	plugin->PageOpen("BackgroundPage", openParam);
 	app->OpenStartup();
 }
 
@@ -98,10 +100,10 @@ void App::LoadConfig()
 		this->disk_folder = iniparser_getstring(dict, "isle:diskpath", default_disk_path);
 		dictionary_del(dict);
 	}
-	if(this->cd_folder.c_str()[this->cd_folder.size()-1] != '/') {
+	if (this->cd_folder.c_str()[this->cd_folder.size() - 1] != '/') {
 		this->cd_folder += "/";
 	}
-	if(this->disk_folder.c_str()[this->disk_folder.size()-1] != '/') {
+	if (this->disk_folder.c_str()[this->disk_folder.size() - 1] != '/') {
 		this->disk_folder += "/";
 	}
 }
@@ -112,7 +114,7 @@ void App::ScanFolders()
 	this->installed_size = 0;
 	this->missing_files.clear();
 	paf::vector<paf::string> found_cd_files;
-    paf::vector<paf::string> found_disk_files;
+	paf::vector<paf::string> found_disk_files;
 
 	listFilesRecursive(this->cd_folder, "", found_cd_files);
 	listFilesRecursive(this->disk_folder, "", found_disk_files);
@@ -129,11 +131,7 @@ void App::ScanFolders()
 			this->found_any_files = true;
 		}
 	}
-	sceClibPrintf(
-		"Missing %d files\ninstalled_size: %lld\n",
-		this->missing_files.size(),
-		this->installed_size
-	);
+	sceClibPrintf("Missing %d files\ninstalled_size: %lld\n", this->missing_files.size(), this->installed_size);
 }
 
 void App::OpenStartup()
@@ -151,11 +149,7 @@ void App::OpenStartup()
 		ScopeLockMain lock();
 
 		if (allDownloaded && !disable_install_check) {
-			auto dialog = new Dialog();
-			dialog->SetTitle("Already Installed");
-			dialog->SetText("You already have all required files installed.");
-			dialog->SetButton1("Ok");
-			dialog->Show(this->plugin, startupPage->Root());
+			dialog::OpenOk(this->plugin, L"Already Installed", L"You already have all required files installed.");
 			return;
 		}
 
@@ -170,19 +164,15 @@ void App::OpenStartup()
 		int free_mb = this->free_space / 1000000;
 
 		if (free_mb < need_mb && !disable_free_space_check) {
-			char buf[128];
-			sceClibSnprintf(
-				buf,
-				sizeof(buf),
-				"Not enough storage left to download this game.\n Need: %dMB, Free: %dMB",
+			wchar_t wbuf[128];
+			sce_paf_swprintf(
+				wbuf,
+				sizeof(wbuf),
+				L"Not enough storage left to download this game.\n Need: %dMB, Free: %dMB",
 				need_mb,
 				free_mb
 			);
-			auto dialog = new Dialog();
-			dialog->SetTitle("Storage Full");
-			dialog->SetText(buf);
-			dialog->SetButton1("Ok", nullptr);
-			dialog->Show(this->plugin, startupPage->Root());
+			dialog::OpenOk(this->plugin, L"Storage Full", wbuf);
 			return;
 		}
 
@@ -193,11 +183,7 @@ void App::OpenStartup()
 		ScopeLockMain lock();
 
 		if (!this->found_any_files) {
-			auto dialog = new Dialog();
-			dialog->SetTitle("Nothing Installed");
-			dialog->SetText("No Game Files found\nNothing to Verify.");
-			dialog->SetButton1("Ok", nullptr);
-			dialog->Show(this->plugin, startupPage->Root());
+			dialog::OpenOk(this->plugin, L"Nothing Installed", L"No Game Files found\nNothing to Verify.");
 			return;
 		}
 
@@ -218,16 +204,14 @@ void App::OpenDownload()
 	this->SwitchPage(downloadPage, [this, downloadPage]() {
 		paf::vector<DownloadFile> downloadFiles;
 
-		for(const auto& gameFile : this->missing_files) {
+		for (const auto& gameFile : this->missing_files) {
 			// always uppercase LEGO, even on cd
-			paf::string url = paf::string(download_server) + "LEGO/" + gameFile->filename.substr(5, gameFile->filename.size());
+			paf::string url =
+				paf::string(download_server) + "LEGO/" + gameFile->filename.substr(5, gameFile->filename.size());
 			paf::string directory = gameFile->folder == DIR_CD ? this->cd_folder : this->disk_folder;
-			downloadFiles.push_back(DownloadFile{
-				.url = url,
-				.directory = directory,
-				.filename = gameFile->filename,
-				.size = gameFile->size
-			});
+			downloadFiles.push_back(
+				DownloadFile{.url = url, .directory = directory, .filename = gameFile->filename, .size = gameFile->size}
+			);
 		}
 
 		sceClibPrintf("Downloading %d files\n", downloadFiles.size());
@@ -238,10 +222,16 @@ void App::OpenDownload()
 			downloadPage->UpdateFile(filename);
 		};
 
-		downloadJob->OnProgress = [this, downloadPage](uint64_t total_downloaded, uint64_t total_size, uint64_t file_downloaded, uint64_t file_size) {
+		downloadJob->OnProgress = [this, downloadPage](
+									  uint64_t total_downloaded,
+									  uint64_t total_size,
+									  uint64_t file_downloaded,
+									  uint64_t file_size
+								  ) {
 			ScopeLockMain lock();
-			float total_progress = (float)(total_downloaded + this->installed_size) / (float)(total_size + this->installed_size) * 100;
-			float file_progress = (float)(file_downloaded) / (float)(file_size) * 100;
+			float total_progress =
+				(float) (total_downloaded + this->installed_size) / (float) (total_size + this->installed_size) * 100;
+			float file_progress = (float) (file_downloaded) / (float) (file_size) * 100;
 			sceClibPrintf("Progress: %f%% %f%%\n", total_progress, file_progress);
 			downloadPage->UpdateProgress(total_downloaded, total_progress, file_progress);
 		};
@@ -254,19 +244,29 @@ void App::OpenDownload()
 		downloadJob->OnComplete = [this, downloadPage](uint64_t total_downloaded) {
 			ScopeLockMain lock();
 
-			auto dialog = new Dialog();
-			dialog->SetTitle("Download Complete");
-			char buf[128];
-			sceClibSnprintf(
-				buf,
-				sizeof(buf),
-				"Successfully downloaded game data\n%dMB Downloaded",
+			wchar_t wbuf[128];
+			sce_paf_swprintf(
+				wbuf,
+				sizeof(wbuf),
+				L"Successfully downloaded game data\n%dMB Downloaded",
 				(int) total_downloaded / 1000000
 			);
-			dialog->SetText(buf);
-			dialog->SetButton1("Launch", []() { sceAppMgrLoadExec("app0:/eboot.bin", NULL, NULL); });
-			dialog->SetButton2("Exit", []() { sceKernelExitProcess(0); });
-			dialog->Show(this->plugin, downloadPage->Root());
+
+			dialog::OpenTwoButton(
+				this->plugin,
+				L"Download Complete",
+				wbuf,
+				paf::IDParam("msg_launch"),
+				paf::IDParam("msg_exit"),
+				[](dialog::ButtonCode button) {
+					if (button == dialog::ButtonCode_Button1) {
+						sceAppMgrLoadExec("app0:/eboot.bin", NULL, NULL);
+					}
+					if (button == dialog::ButtonCode_Button2) {
+						sceKernelExitProcess(0);
+					}
+				}
+			);
 		};
 
 		this->enqueueJob(downloadJob);
@@ -287,8 +287,8 @@ void App::OpenVerify()
 
 		verifyJob->OnProgress = [this, verifyPage](uint64_t total_done, uint64_t file_done, uint64_t file_size) {
 			ScopeLockMain lock();
-			float total_progress = (float)(total_done) / (float)(this->installed_size) * 100;
-			float file_progress = (float)(file_done) / (float)(file_size) * 100;
+			float total_progress = (float) (total_done) / (float) (this->installed_size) * 100;
+			float file_progress = (float) (file_done) / (float) (file_size) * 100;
 			sceClibPrintf("Progress: %f%% %f%%\n", total_progress, file_progress);
 			verifyPage->UpdateProgress(total_done, total_progress, file_progress);
 		};
@@ -316,32 +316,49 @@ void App::OpenVerify()
 			}
 
 			if (validCount == results.size()) {
-				auto dialog = new Dialog();
-				dialog->SetTitle("Verify Complete");
-				dialog->SetText("All OK.");
-				dialog->SetButton1("Exit", []() { sceKernelExitProcess(0); });
-				dialog->Show(this->plugin, verifyPage->Root());
-				return;
+				dialog::OpenTwoButton(
+					this->plugin,
+					L"Verify Complete",
+					L"All OK.",
+					paf::IDParam("msg_launch"),
+					paf::IDParam("msg_exit"),
+					[](dialog::ButtonCode button) {
+						if (button == dialog::ButtonCode_Button1) {
+							sceAppMgrLoadExec("app0:/eboot.bin", NULL, NULL);
+						}
+						if (button == dialog::ButtonCode_Button2) {
+							sceKernelExitProcess(0);
+						}
+					}
+				);
 			}
-
-			auto dialog = new Dialog();
-			dialog->SetTitle("Verify Complete");
-			char buf[256];
-			sceClibSnprintf(
-				buf,
-				sizeof(buf),
-				"Valid: %d\nBroken: %d\nMissing: %d\nPress 'Download' to Fix",
-				validCount,
-				brokenCount,
-				missingCount
-			);
-			dialog->SetText(buf);
-			dialog->SetButton1("Download", [this]() {
-				ScopeLockMain lock();
-				this->FixBroken();
-			});
-			dialog->SetButton2("Exit", []() { sceKernelExitProcess(0); });
-			dialog->Show(this->plugin, verifyPage->Root());
+			else {
+				wchar_t wbuf[256];
+				sce_paf_swprintf(
+					wbuf,
+					sizeof(wbuf),
+					L"Valid: %d\nBroken: %d\nMissing: %d\nPress 'Download' to Fix",
+					validCount,
+					brokenCount,
+					missingCount
+				);
+				dialog::OpenTwoButton(
+					this->plugin,
+					L"Verify Complete",
+					wbuf,
+					paf::IDParam("msg_download"),
+					paf::IDParam("msg_exit"),
+					[this](dialog::ButtonCode button) {
+						if (button == dialog::ButtonCode_Button1) {
+							ScopeLockMain lock();
+							this->FixBroken();
+						}
+						if (button == dialog::ButtonCode_Button2) {
+							sceKernelExitProcess(0);
+						}
+					}
+				);
+			}
 		};
 
 		this->enqueueJob(verifyJob);

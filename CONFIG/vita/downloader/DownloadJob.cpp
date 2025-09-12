@@ -6,7 +6,8 @@
 #include <psp2/kernel/clib.h>
 #include <psp2/net/http.h>
 
-static int SaveToFile(int reqId, const paf::string& filename, std::function<void(uint64_t)> OnProgress) {
+static int SaveToFile(int reqId, const paf::string& filename, std::function<void(uint64_t)> OnProgress)
+{
 	int ret = 0;
 
 	paf::vector<uint8_t> buffer;
@@ -39,7 +40,13 @@ static int SaveToFile(int reqId, const paf::string& filename, std::function<void
 	return ret;
 }
 
-static int DoDownload(const DownloadFile& file, int connId, paf::string& errorMessage, std::function<void(uint64_t)> OnProgress) {
+static int DoDownload(
+	const DownloadFile& file,
+	int connId,
+	paf::string& errorMessage,
+	std::function<void(uint64_t)> OnProgress
+)
+{
 	char buf[0x100];
 	sceClibPrintf("Downloading: %s\n", file.filename.c_str());
 	paf::string filepath = file.directory + file.filename;
@@ -84,7 +91,7 @@ static int DoDownload(const DownloadFile& file, int connId, paf::string& errorMe
 	}
 
 	ret = SaveToFile(reqId, tmpPath, OnProgress);
-	if(ret < 0) {
+	if (ret < 0) {
 		sceHttpDeleteRequest(reqId);
 		sceClibSnprintf(buf, sizeof(buf), "failed to save file %08x", ret);
 		errorMessage = paf::string(buf);
@@ -96,7 +103,8 @@ static int DoDownload(const DownloadFile& file, int connId, paf::string& errorMe
 	return 0;
 }
 
-DownloadJob::DownloadJob(const paf::string& baseUrl, const paf::vector<DownloadFile>& files) : paf::job::JobItem("Download")
+DownloadJob::DownloadJob(const paf::string& baseUrl, const paf::vector<DownloadFile>& files)
+	: paf::job::JobItem("Download")
 {
 	this->files = files;
 	this->tmpl = sceHttpCreateTemplate("downloader", SCE_HTTP_VERSION_1_1, 1);
@@ -114,19 +122,24 @@ int32_t DownloadJob::Run()
 	uint64_t total_size = 0;
 	uint64_t total_downloaded = 0;
 
-	for(const auto& file : this->files) {
+	for (const auto& file : this->files) {
 		total_size += file.size;
 	}
-	
-	for(const auto& file : this->files) {
+
+	for (const auto& file : this->files) {
 		this->OnFileStart(file.filename);
 
-		while(true) {
+		while (true) {
 			paf::string errorMessage;
-			int ret = DoDownload(file, this->conn, errorMessage, [this, total_downloaded, total_size, file](uint64_t downloaded_file) {
-				this->OnProgress(total_downloaded+downloaded_file, total_size, downloaded_file, file.size);
-			});
-			if(ret < 0) {
+			int ret = DoDownload(
+				file,
+				this->conn,
+				errorMessage,
+				[this, total_downloaded, total_size, file](uint64_t downloaded_file) {
+					this->OnProgress(total_downloaded + downloaded_file, total_size, downloaded_file, file.size);
+				}
+			);
+			if (ret < 0) {
 				sceClibPrintf("failed to download %s: %s\n", file.filename.c_str(), errorMessage.c_str());
 				this->OnError(file.filename, errorMessage);
 				paf::thread::Sleep(3000);
