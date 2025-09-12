@@ -338,6 +338,10 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv)
 			sceClibPrintf("Loading Config App.\n");
 			sceAppMgrLoadExec("app0:/isle-config.self", NULL, NULL);
 		}
+		if (strstr(buffer, "-install")) {
+			sceClibPrintf("Loading Downloader App.\n");
+			sceAppMgrLoadExec("app0:/isle-downloader.self", NULL, NULL);
+		}
 	}
 #endif
 

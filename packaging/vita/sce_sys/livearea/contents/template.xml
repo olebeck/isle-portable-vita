@@ -20,4 +20,13 @@
       </text>
     </liveitem>
   </frame>
+  <frame id="frame1">
+    <liveitem>
+      <target>psla:-install</target>
+      <image>install.png</image>
+      <text align="center" valign="center" x="0" y="-64" origin="background" text-align="center" text-valign="center">
+        <str color="#ff4500" bold="on" oblique="off" shadow="on" emboss="off">Install</str>
+      </text>
+    </liveitem>
+  </frame>
 </livearea>

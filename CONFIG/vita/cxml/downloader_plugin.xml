@@ -1,91 +1,110 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<resource version="0.1" type="normal" id="config_plugin">
-    <filetable>
-        <file src="settings.xml" type="application/xml" id="settings.xml" compress="off" />
-    </filetable>
+<resource version="0.1" type="normal" id="downloader_plugin">
+  <pagetable>
+    <page id="BackgroundPage">
+      <plane style="_common_default_style_plane" texture="tex_background" id="plane_background">
+        <layout_hint size="960,544"/>
+      </plane>
+    </page>
 
-    <pagetable>
-      <page id="FallbackPage">
-        <plane style="_common_style_plane_1">
-          <layout_hint size="960, 544" />
-          <box style="_common_default_style_box">
-            <layout_box space="20" layout_type="2" />
-            <text label="msg_page_not_found">
-              <layout_hint adjust="2, 2"></layout_hint>
-            </text>
-          </box>
-        </plane>
-      </page>
+    <page id="FallbackPage">
+      <plane style="_common_style_plane_1">
+        <layout_hint size="960, 544" />
+        <box style="_common_default_style_box">
+          <layout_box space="20" layout_type="2" />
+          <text label="msg_page_not_found">
+            <layout_hint adjust="2, 2"></layout_hint>
+          </text>
+        </box>
+      </plane>
+    </page>
 
-      <page id="StartupPage">
-        <!-- TODO: add text, background image -->
+    <page id="StartupPage">
+      <!-- TODO: add text, background image -->
+      <box>
+        <layout_box space="20" layout_type="1" />
+
+        <!-- text -->
+        <box>
+          <layout_box adjust="2,2" anchor="0,0" bottom_margin="100"/>
+          <text id="info_text" label="msg_info">
+            <layout_hint align="0,0" adjust="2,0" anchor="1,0" size="0,200"/>
+          </text>
+        </box>
+
+        <!-- buttons -->
         <box style="_common_default_style_box">
           <layout_box space="20" layout_type="2" />
           <button id="download_button" style="_common_default_style_button" label="msg_download">
-            <layout_hint size="100, 100"/>
+            <layout_hint size="160, 100"/>
           </button>
           <button id="verify_button" style="_common_default_style_button" label="msg_verify">
-            <layout_hint size="100, 100"/>
+            <layout_hint size="160, 100"/>
           </button>
         </box>
-      </page>
+      </box>
+    </page>
 
-      <page id="DownloadPage">
-        <plane style="_common_style_plane_1">
-          <layout_hint size="960, 544" />
-          <template_ref id="download_dialog" template="_common_template_dialog_base" />
-        </plane>
-      </page>
+    <page id="DownloadPage">
+      <box>
+        <layout_hint size="960, 544" />
+        <template_ref id="download_dialog" template="_common_template_dialog_base" />
+      </box>
+    </page>
 
-      <page id="VerifyPage">
-        <plane style="_common_style_plane_1">
-          <layout_hint size="960, 544" />
-          <template_ref id="verify_dialog" template="_common_template_dialog_base" />
-        </plane>
-      </page>
-    </pagetable>
+    <page id="VerifyPage">
+      <box>
+        <layout_hint size="960, 544" />
+        <template_ref id="verify_dialog" template="_common_template_dialog_base" />
+      </box>
+    </page>
+  </pagetable>
 
-    <templatetable>
-      <template id="template_downloading_dialog">
-        <box style="_common_default_style_dialog_box" id="dialog_box1">
-          <layout_box layout_type="1" bottom_margin="20" top_margin="0" id="default" space="20"/>
-          <template_ref id="dialog_title" template="_common_template_dialog_title"/>
-          <template_ref id="dialog_text" template="_common_template_dialog_text"/>
-          <box style="_common_default_style_dialog_box" id="dialog_progressbar_box_1">
-              <layout_box layout_type="1" id="default" children_align_x="0"/>
-              <text style="_common_style_text_progressbar_label" id="dialog_progressbar1_label1">
-                  <layout_hint adjust="2, 2, 0" id="default"/>
-              </text>
-              <progressbar style="_common_default_style_progressbar" w_label="dialog_progressbar_text" id="dialog_progressbar1" signal_anim="1">
-                  <layout_hint size="500, 30, 0, 0"/>
-                  <text style="_common_default_style_text" id="dialog_progressbar_text">
-                      <layout_hint adjust="2, 2, 0" id="default"/>
-                  </text>
-              </progressbar>
-          </box>
-
-          <box style="_common_default_style_dialog_box" id="dialog_progressbar_box_2">
-              <layout_box layout_type="1" id="default" children_align_x="0"/>
-              <text style="_common_style_text_progressbar_label" id="dialog_progressbar1_label1">
-                  <layout_hint adjust="2, 2, 0" id="default"/>
-              </text>
-              <progressbar style="_common_default_style_progressbar" w_label="dialog_progressbar_text" id="dialog_progressbar1" signal_anim="1">
-                  <layout_hint size="500, 30, 0, 0"/>
-                  <text style="_common_default_style_text" id="dialog_progressbar_text">
-                      <layout_hint adjust="2, 2, 0" id="default"/>
-                  </text>
-              </progressbar>
-          </box>
-
-          <text style="_common_default_style_text" id="dialog_error_message">
+  <templatetable>
+    <template id="template_downloading_dialog">
+      <box style="_common_default_style_dialog_box" id="dialog_box1">
+        <layout_box layout_type="1" bottom_margin="20" top_margin="0" id="default" space="20"/>
+        <template_ref id="dialog_title" template="_common_template_dialog_title"/>
+        <template_ref id="dialog_text" template="_common_template_dialog_text"/>
+        <box style="_common_default_style_dialog_box" id="dialog_progressbar_box_1">
+          <layout_box layout_type="1" id="default" children_align_x="0"/>
+          <text style="_common_style_text_progressbar_label" id="dialog_progressbar1_label1">
               <layout_hint adjust="2, 2, 0" id="default"/>
           </text>
-      </box>
-      </template>
-    </templatetable>
+          <progressbar style="_common_default_style_progressbar" w_label="dialog_progressbar_text" id="dialog_progressbar1" signal_anim="1">
+            <layout_hint size="500, 30, 0, 0"/>
+            <text style="_common_default_style_text" id="dialog_progressbar_text">
+              <layout_hint adjust="2, 2, 0" id="default"/>
+            </text>
+          </progressbar>
+        </box>
 
-    <stringtable>
-      <locale src="locale/en.xml" compress="on" id="en" />
+        <box style="_common_default_style_dialog_box" id="dialog_progressbar_box_2">
+          <layout_box layout_type="1" id="default" children_align_x="0"/>
+          <text style="_common_style_text_progressbar_label" id="dialog_progressbar1_label1">
+            <layout_hint adjust="2, 2, 0" id="default"/>
+          </text>
+          <progressbar style="_common_default_style_progressbar" w_label="dialog_progressbar_text" id="dialog_progressbar1" signal_anim="1">
+            <layout_hint size="500, 30, 0, 0"/>
+            <text style="_common_default_style_text" id="dialog_progressbar_text">
+              <layout_hint adjust="2, 2, 0" id="default"/>
+            </text>
+          </progressbar>
+        </box>
+
+        <text style="_common_default_style_text" id="dialog_error_message">
+          <layout_hint adjust="2, 2, 0" id="default"/>
+        </text>
+      </box>
+    </template>
+  </templatetable>
+
+  <stringtable>
+    <locale src="locale/en_downloader.xml" compress="on" id="en" />
   </stringtable>
+
+  <texturetable>
+    <texture src="background.png" type="texture/png" id="tex_background"/>
+  </texturetable>
 </resource>

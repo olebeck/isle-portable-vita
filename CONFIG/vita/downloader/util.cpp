@@ -35,7 +35,7 @@ void listFilesRecursive(const paf::string& base, const paf::string& dir, paf::ve
 
 paf::string removeFileName(const paf::string& path)
 {
-	paf::string& path_ = (paf::string&)path;
+	paf::string& path_ = (paf::string&) path;
 	size_t last_index = path_.rfind('/', 0xffffffff);
 	if (last_index == 0xffffffff) {
 		return "";
