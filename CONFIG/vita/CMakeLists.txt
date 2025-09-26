@@ -89,8 +89,7 @@ add_executable(isle-downloader
   
   downloader/DownloadJob.cpp
   downloader/VerifyJob.cpp
-
-  downloader/sha256.c
+  downloader/DeleteFilesJob.cpp
 )
 
 set_target_properties(isle-downloader PROPERTIES
@@ -99,11 +98,11 @@ set_target_properties(isle-downloader PROPERTIES
 
 target_compile_options(isle-downloader PRIVATE
   $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti -fno-exceptions>
-  -Wl,-q -Wall -fno-builtin -fshort-wchar -Wno-unused-function -Wno-sign-compare -fno-use-cxa-atexit
+  -Wl,-q -Wall -fshort-wchar -Wno-unused-function -Wno-sign-compare -fno-use-cxa-atexit
 )
 
 target_link_options(isle-downloader PRIVATE
-  -nostartfiles -nostdlib
+  -nostdlib
 )
 
 target_link_libraries(isle-downloader PRIVATE

@@ -11,7 +11,7 @@
 char sceUserMainThreadName[] = "isle_downloader";
 int sceUserMainThreadPriority = 0x10000100;
 int sceUserMainThreadCpuAffinityMask = 0x70000;
-SceSize sceUserMainThreadStackSize = 0x4000;
+SceSize sceUserMainThreadStackSize = 0x8000;
 
 int sceLibcHeapSize = 10 * 1024 * 1024;
 
@@ -36,6 +36,15 @@ void __throw_bad_alloc()
 	abort();
 }
 } // namespace std
+
+extern "C"
+{
+	int atexit(void (*__func)(void))
+	{
+		// never called on vita
+		return 0;
+	}
+}
 
 void operator delete(void* ptr, unsigned int n)
 {
@@ -89,7 +98,7 @@ extern "C" int module_start(SceSize args, void* argp)
 	sceHttpInit(1 * 1024 * 1024);
 
 	sceSysmoduleLoadModule(SCE_SYSMODULE_HTTPS);
-	sceSslInit(100 * 1024);
+	sceSslInit(150 * 1024);
 
 	for (void (**p)() = &__init_array_start; p < &__init_array_end; ++p) {
 		(*p)();

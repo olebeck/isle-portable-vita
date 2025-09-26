@@ -6,6 +6,9 @@ VerifyPage::VerifyPage(uint64_t total_size)
 {
 	this->total_size = total_size;
 	this->mb_done = 0;
+	this->validCount = 0;
+	this->brokenCount = 0;
+	this->missingCount = 0;
 }
 
 void VerifyPage::Mount()
@@ -36,10 +39,13 @@ void VerifyPage::updateDialogText()
 	sce_paf_swprintf(
 		wbuf,
 		sizeof(wbuf),
-		L"Checked %d/%dMB\nCurrent File: %ls",
+		L"Checked %d/%dMB\nCurrent File: %ls\nValid: %d Broken: %d Missing: %d",
 		this->mb_done,
 		(int) (this->total_size / 1000000),
-		StringToWString(this->filename).c_str()
+		StringToWString(this->filename).c_str(),
+		validCount,
+		brokenCount,
+		missingCount
 	);
 	this->dialog_text1->SetString(wbuf);
 }
@@ -60,4 +66,11 @@ void VerifyPage::UpdateProgress(uint64_t total_done, float total_progress, float
 		this->mb_done = current_mb;
 		this->updateDialogText();
 	}
+}
+
+void VerifyPage::UpdateVerifiedStatus(int validCount, int brokenCount, int missingCount)
+{
+	this->validCount = validCount;
+	this->brokenCount = brokenCount;
+	this->missingCount = missingCount;
 }

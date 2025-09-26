@@ -22,23 +22,34 @@ paf::wstring StringToWString(const paf::string& str);
 uint64_t GetFreeSpace(const char* device);
 
 constexpr std::size_t operator""_KiB(unsigned long long int x) {
-  return 1024ULL * x;
+    return 1024ULL * x;
 }
 
 constexpr std::size_t operator""_MiB(unsigned long long int x) {
-  return 1024_KiB * x;
+    return 1024_KiB * x;
 }
 
 constexpr std::size_t operator""_GiB(unsigned long long int x) {
-  return 1024_MiB * x;
+    return 1024_MiB * x;
 }
 
 constexpr std::size_t operator""_TiB(unsigned long long int x) {
-  return 1024_GiB * x;
+    return 1024_GiB * x;
 }
 
 constexpr std::size_t operator""_PiB(unsigned long long int x) {
-  return 1024_TiB * x;
+    return 1024_TiB * x;
 }
 
 bool hexDecode(const paf::string& hex, uint8_t* out_bytes);
+
+class ButtonListener : public paf::ui::EventListener {
+    std::function<void()> OnClick;
+
+public:
+    ButtonListener(std::function<void()> OnClick);
+
+    virtual int32_t Do(int32_t type, paf::ui::Handler *self, paf::ui::Event *e) override;
+};
+
+void AddClickCallback(paf::ui::ButtonBase* button, std::function<void()> func);

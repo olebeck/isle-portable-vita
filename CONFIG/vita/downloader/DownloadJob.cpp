@@ -43,6 +43,7 @@ static int SaveToFile(int reqId, const paf::string& filename, std::function<void
 static int DoDownload(
 	const DownloadFile& file,
 	int connId,
+	const char* acceptLanguage,
 	paf::string& errorMessage,
 	std::function<void(uint64_t)> OnProgress
 )
@@ -65,6 +66,8 @@ static int DoDownload(
 		errorMessage = "failed to create request";
 		return ret;
 	}
+
+	sceHttpAddRequestHeader(reqId, "Accept-Language", acceptLanguage, SCE_HTTP_HEADER_OVERWRITE);
 
 	// send request
 	ret = sceHttpSendRequest(reqId, nullptr, 0);
@@ -103,10 +106,15 @@ static int DoDownload(
 	return 0;
 }
 
-DownloadJob::DownloadJob(const paf::string& baseUrl, const paf::vector<DownloadFile>& files)
+DownloadJob::DownloadJob(
+	const paf::string& baseUrl,
+	const char* acceptLanguage,
+	const paf::vector<DownloadFile>& files
+)
 	: paf::job::JobItem("Download")
 {
 	this->files = files;
+	this->acceptLanguage = acceptLanguage;
 	this->tmpl = sceHttpCreateTemplate("downloader", SCE_HTTP_VERSION_1_1, 1);
 	this->conn = sceHttpCreateConnectionWithURL(this->tmpl, baseUrl.c_str(), 1);
 }
@@ -134,6 +142,7 @@ int32_t DownloadJob::Run()
 			int ret = DoDownload(
 				file,
 				this->conn,
+				this->acceptLanguage,
 				errorMessage,
 				[this, total_downloaded, total_size, file](uint64_t downloaded_file) {
 					this->OnProgress(total_downloaded + downloaded_file, total_size, downloaded_file, file.size);

@@ -2,9 +2,12 @@
 <stringset>
     <string id="msg_download" src="Download" />
     <string id="msg_verify" src="Verify" />
+    <string id="msg_versions" src="Versions" />
     <string id="msg_launch" src="Launch" />
     <string id="msg_exit" src="Exit" />
+    <string id="msg_back" src="Back" />
     <string id="msg_info" src="Press 'Download' to download game assets
-'Verify' to check game asset integrity"/>
+'Verify' to check game asset integrity
+'Versions' to select a version"/>
     <string id="msg_page_not_found" src="page not found" />
 </stringset>

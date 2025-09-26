@@ -13,6 +13,7 @@ struct DownloadFile {
 class DownloadJob : public paf::job::JobItem {
 private:
     paf::vector<DownloadFile> files;
+    const char* acceptLanguage;
     int tmpl;
     int conn;
 
@@ -22,7 +23,7 @@ public:
     std::function<void(uint64_t)> OnComplete;
     std::function<void(const paf::string&, const paf::string&)> OnError;
 
-    DownloadJob(const paf::string& baseUrl, const paf::vector<DownloadFile>& files);
+    DownloadJob(const paf::string& baseUrl, const char* acceptLanguage, const paf::vector<DownloadFile>& files);
     ~DownloadJob();
 
     int32_t Run() override;

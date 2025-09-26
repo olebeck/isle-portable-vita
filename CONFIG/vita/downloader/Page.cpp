@@ -32,16 +32,3 @@ void Page::Close()
 		this->scene = nullptr;
 	}
 }
-
-void func_button_callback(int32_t type, paf::ui::Handler* self, paf::ui::Event* e, void* userdata)
-{
-	auto* callback_ptr = static_cast<std::function<void()>*>(userdata);
-	if (callback_ptr) {
-		(*callback_ptr)();
-	}
-}
-
-void AddClickCallback(paf::ui::ButtonBase* button, std::function<void()>* func)
-{
-	button->AddEventCallback(paf::ui::ButtonBase::CB_BTN_DECIDE, func_button_callback, func);
-}

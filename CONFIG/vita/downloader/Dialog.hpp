@@ -66,15 +66,19 @@ namespace dialog
 
 	paf::ui::ListView *OpenListView(
 		paf::Plugin *workPlugin,
-		const wchar_t* titleText,
-		std::function<void(ButtonCode)> onClick = nullptr
+		const wchar_t* titleText
     );
 
 	paf::ui::ScrollView *OpenScrollView(
 		paf::Plugin *workPlugin,
-		const wchar_t* titleText,
-		std::function<void(ButtonCode)> onClick = nullptr
+		const wchar_t* titleText
     );
+
+	paf::ui::ProgressBar* OpenProgress(
+		paf::Plugin *workPlugin,
+		const wchar_t* titleText,
+		const wchar_t* messageText
+	);
 
 	void Close();
 

@@ -1,17 +1,20 @@
 #pragma once
 
 #include "Page.hpp"
+#include "GameFiles.hpp"
 
 class StartupPage : public Page {
 private:
-    uint64_t data_todo;
-    paf::string cd_folder;
-    paf::string disk_folder;
+    EVersion version;
+    int missingCount;
+
+    void OpenVersionsList();
 public:
+    std::function<void(EVersion)> OnChangeVersion;
     std::function<void()> OnDownloadButton;
     std::function<void()> OnVerifyButton;
 
-    StartupPage(uint64_t dataTodo, const paf::string& cd_folder, const paf::string& disk_folder) : data_todo(dataTodo) {};
+    StartupPage(EVersion version, int missingCount);
 
     paf::IDParam PageId() override { return "StartupPage"; };
     void Mount() override;

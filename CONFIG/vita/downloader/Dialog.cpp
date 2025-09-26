@@ -24,7 +24,7 @@ static void CommonGuiEventHandler(SceInt32 instanceSlot, sce::CommonGuiDialog::D
 	}
 }
 
-void OpenDialog(
+bool OpenDialog(
 	paf::Plugin* workPlugin,
 	const wchar_t* titleText,
 	const wchar_t* messageText,
@@ -33,7 +33,7 @@ void OpenDialog(
 )
 {
 	if (s_currentDialog != CURRENT_DIALOG_NONE) {
-		return;
+		return false;
 	}
 
 	paf::wstring title;
@@ -60,6 +60,7 @@ void OpenDialog(
 	if (!isMainThread) {
 		paf::thread::RMutex::MainThreadMutex()->Unlock();
 	}
+	return true;
 }
 
 void dialog::OpenPleaseWait(
@@ -172,78 +173,38 @@ void dialog::OpenTwoButton(
 	OpenDialog(workPlugin, titleText, messageText, &dialogParam, onClick);
 }
 
-paf::ui::ListView* dialog::OpenListView(
-	paf::Plugin* workPlugin,
-	const wchar_t* titleText,
-	std::function<void(dialog::ButtonCode)> onClick
-)
+paf::ui::ListView* dialog::OpenListView(paf::Plugin* workPlugin, const wchar_t* titleText)
 {
-	if (s_currentDialog != CURRENT_DIALOG_NONE) {
-		return nullptr;
+	if (OpenDialog(workPlugin, titleText, nullptr, &sce::CommonGuiDialog::Param::s_dialogXLView, nullptr)) {
+		paf::ui::Widget* ret =
+			sce::CommonGuiDialog::Dialog::GetWidget(s_currentDialog, sce::CommonGuiDialog::REGISTER_ID_LIST_VIEW);
+		return (paf::ui::ListView*) ret;
 	}
-
-	s_buttonCallback = onClick;
-
-	bool isMainThread = paf::thread::ThreadIDCache::Check(paf::thread::ThreadIDCache::Type_Main);
-	if (!isMainThread) {
-		paf::thread::RMutex::MainThreadMutex()->Lock();
-	}
-
-	paf::wstring title = titleText;
-
-	s_currentDialog = sce::CommonGuiDialog::Dialog::Show(
-		workPlugin,
-		&title,
-		nullptr,
-		&sce::CommonGuiDialog::Param::s_dialogXLView,
-		CommonGuiEventHandler,
-		nullptr
-	);
-	paf::ui::Widget* ret =
-		sce::CommonGuiDialog::Dialog::GetWidget(s_currentDialog, sce::CommonGuiDialog::REGISTER_ID_LIST_VIEW);
-
-	if (!isMainThread) {
-		paf::thread::RMutex::MainThreadMutex()->Unlock();
-	}
-
-	return (paf::ui::ListView*) ret;
+	return nullptr;
 }
 
-paf::ui::ScrollView* dialog::OpenScrollView(
+paf::ui::ScrollView* dialog::OpenScrollView(paf::Plugin* workPlugin, const wchar_t* titleText)
+{
+	if (OpenDialog(workPlugin, titleText, nullptr, &sce::CommonGuiDialog::Param::s_dialogXView, nullptr)) {
+		paf::ui::Widget* ret =
+			sce::CommonGuiDialog::Dialog::GetWidget(s_currentDialog, sce::CommonGuiDialog::REGISTER_ID_SCROLL_VIEW);
+		return (paf::ui::ScrollView*) ret;
+	}
+	return nullptr;
+}
+
+paf::ui::ProgressBar* dialog::OpenProgress(
 	paf::Plugin* workPlugin,
 	const wchar_t* titleText,
-	std::function<void(dialog::ButtonCode)> onClick
+	const wchar_t* messageText
 )
 {
-	if (s_currentDialog != CURRENT_DIALOG_NONE) {
-		return nullptr;
+	if (OpenDialog(workPlugin, titleText, messageText, &sce::CommonGuiDialog::Param::s_dialogProgress, nullptr)) {
+		paf::ui::Widget* ret =
+			sce::CommonGuiDialog::Dialog::GetWidget(s_currentDialog, sce::CommonGuiDialog::REGISTER_ID_PROGRESSBAR);
+		return (paf::ui::ProgressBar*) ret;
 	}
-
-	s_buttonCallback = onClick;
-
-	bool isMainThread = paf::thread::ThreadIDCache::Check(paf::thread::ThreadIDCache::Type_Main);
-	if (!isMainThread) {
-		paf::thread::RMutex::MainThreadMutex()->Lock();
-	}
-
-	paf::wstring title = titleText;
-
-	s_currentDialog = sce::CommonGuiDialog::Dialog::Show(
-		workPlugin,
-		&title,
-		nullptr,
-		&sce::CommonGuiDialog::Param::s_dialogXView,
-		CommonGuiEventHandler,
-		nullptr
-	);
-	paf::ui::Widget* ret =
-		sce::CommonGuiDialog::Dialog::GetWidget(s_currentDialog, sce::CommonGuiDialog::REGISTER_ID_SCROLL_VIEW);
-
-	if (!isMainThread) {
-		paf::thread::RMutex::MainThreadMutex()->Unlock();
-	}
-
-	return (paf::ui::ScrollView*) ret;
+	return nullptr;
 }
 
 void dialog::Close()

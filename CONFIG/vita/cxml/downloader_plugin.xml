@@ -21,15 +21,17 @@
     </page>
 
     <page id="StartupPage">
-      <!-- TODO: add text, background image -->
       <box>
         <layout_box space="20" layout_type="1" />
 
         <!-- text -->
         <box>
-          <layout_box adjust="2,2" anchor="0,0" bottom_margin="100"/>
+          <layout_box adjust="2,2" anchor="0,0" layout_type="1"/>
           <text id="info_text" label="msg_info">
-            <layout_hint align="0,0" adjust="2,0" anchor="1,0" size="0,200"/>
+            <layout_hint align="0,0" adjust="2,2" anchor="1,0"/>
+          </text>
+          <text id="version_text">
+            <layout_hint align="0,0" adjust="2,2" anchor="1,0"/>
           </text>
         </box>
 
@@ -40,6 +42,9 @@
             <layout_hint size="160, 100"/>
           </button>
           <button id="verify_button" style="_common_default_style_button" label="msg_verify">
+            <layout_hint size="160, 100"/>
+          </button>
+          <button id="versions_button" style="_common_default_style_button" label="msg_versions">
             <layout_hint size="160, 100"/>
           </button>
         </box>
@@ -98,6 +103,14 @@
         </text>
       </box>
     </template>
+    <template fast_open="1" id="tmpl_version_list_item">
+      <list_item style="_common_style_list_item_transparent" id="list_item">
+        <layout_hint adjust="0, 2" size="240, 70" />
+        <button sound="_common_sound_button_enter" style="_style_button" id="button">
+          <layout_hint size="240, 70" />
+        </button>
+      </list_item>
+    </template>
   </templatetable>
 
   <stringtable>
@@ -107,4 +120,12 @@
   <texturetable>
     <texture src="background.png" type="texture/png" id="tex_background"/>
   </texturetable>
+
+  <styletable>
+    <style_button bg_obj="obj1" glow_obj="obj2" label_obj="txtobj" id="_style_button">
+      <planeobj texture0="_common_texture_list_70px" id="obj1" />
+      <planeobj texture0="_common_texture_list_glow_70px" id="obj2" />
+      <textobj font_size="24" bold="1" color="1, 1, 1, 1" word_wrap="1" align_x="1" align_y="1" ellipsis="0" emboss="0" id="txtobj" />
+    </style_button>
+  </styletable>
 </resource>

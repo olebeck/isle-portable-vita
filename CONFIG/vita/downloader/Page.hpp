@@ -40,4 +40,3 @@ public:
     }
 };
 
-void AddClickCallback(paf::ui::ButtonBase* button, std::function<void()>* func);

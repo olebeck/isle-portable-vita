@@ -127,3 +127,19 @@ bool hexDecode(const paf::string& hex, uint8_t* out)
 
 	return true;
 }
+
+ButtonListener::ButtonListener(std::function<void()> OnClick)
+{
+	this->OnClick = OnClick;
+}
+
+int32_t ButtonListener::Do(int32_t type, paf::ui::Handler* self, paf::ui::Event* e)
+{
+	this->OnClick();
+	return 0;
+}
+
+void AddClickCallback(paf::ui::ButtonBase* button, std::function<void()> func)
+{
+	button->AddEventListener(paf::ui::ButtonBase::CB_BTN_DECIDE, new ButtonListener(func));
+}

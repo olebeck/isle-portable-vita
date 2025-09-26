@@ -5,43 +5,41 @@
 #include "VerifyJob.hpp"
 
 class App {
+    static App* instance;
+
     paf::Framework* framework;
-    paf::job::JobQueue* jobs;
     paf::Plugin* plugin;
-    paf::ui::Widget* scene;
 
     Page* current_page;
-    Page* next_page;
-    std::function<void()> after_open;
 
     paf::string cd_folder;
     paf::string disk_folder;
-    bool found_any_files;
-    paf::vector<const GameFile*> missing_files;
-    paf::vector<VerifyResult> verify_results;
-    uint64_t free_space;
-    uint64_t installed_size;
 
-    static App* instance;
+    EVersion installed_version;
+    EVersion selected_version;
+
+    static void startFunc(paf::Plugin* plugin);
+    void enqueueJob(paf::job::JobItem* job);
+    void SwitchPage(Page* next_page);
+    bool StartDownload(EVersion version);
 
 public:
     App(paf::Framework* framework);
+    App(const App&) = delete;
+
     static inline App* GetInstance() {
         return App::instance;
     };
 
-private:
     void loadPlugin();
-    static void startFunc(paf::Plugin* plugin);
-    static void switchPageTask(void* userdata);
-    void SwitchPage(Page* page, std::function<void()> after_open);
-    void enqueueJob(paf::job::JobItem* job);
-
     void LoadConfig();
-    void ScanFolders();
-    void FixBroken();
+    void DetectVersion();
+    void ScanFolders(EVersion version, paf::vector<const GameFile*>& missing_files, uint64_t& installed_size);
+    void FixBroken(paf::vector<VerifyResult>& verifyResults);
 
-    void OpenStartup();
-    void OpenDownload();
-    void OpenVerify();
+    void OpenStartup(uint64_t installed_size, int missingCount);
+    void OpenDownload(EVersion version, paf::vector<const GameFile*>& missingFiles, uint64_t installed_size);
+    void OpenVerify(uint64_t installed_size);
+
+    void OnChangeVersion(EVersion newVersion);
 };
