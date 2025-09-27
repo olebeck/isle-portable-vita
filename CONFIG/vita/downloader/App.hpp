@@ -40,6 +40,4 @@ public:
     void OpenStartup(uint64_t installed_size, int missingCount);
     void OpenDownload(EVersion version, paf::vector<const GameFile*>& missingFiles, uint64_t installed_size);
     void OpenVerify(uint64_t installed_size);
-
-    void OnChangeVersion(EVersion newVersion);
 };

@@ -49,7 +49,7 @@ static int DoDownload(
 )
 {
 	char buf[0x100];
-	sceClibPrintf("Downloading: %s\n", file.filename.c_str());
+	sceClibPrintf("Downloading: %s %s\n", file.directory.c_str(), file.filename.c_str());
 	paf::string filepath = file.directory + file.filename;
 	paf::string tmpPath = filepath + ".tmp";
 
@@ -106,14 +106,13 @@ static int DoDownload(
 	return 0;
 }
 
-DownloadJob::DownloadJob(
-	const paf::string& baseUrl,
-	const char* acceptLanguage,
-	const paf::vector<DownloadFile>& files
-)
+DownloadJob::DownloadJob(const paf::string& baseUrl, const char* acceptLanguage, const paf::vector<DownloadFile>& files)
 	: paf::job::JobItem("Download")
 {
-	this->files = files;
+	this->files.reserve(files.size());
+	for(const auto& file : files) {
+		this->files.push_back(file);
+	}
 	this->acceptLanguage = acceptLanguage;
 	this->tmpl = sceHttpCreateTemplate("downloader", SCE_HTTP_VERSION_1_1, 1);
 	this->conn = sceHttpCreateConnectionWithURL(this->tmpl, baseUrl.c_str(), 1);

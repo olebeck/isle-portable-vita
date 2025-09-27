@@ -38,8 +38,11 @@ struct GameFile {
 
 struct GameVersion {
     EVersion version;
-    paf::vector<GameFile> files;
+    const GameFile* files;
+    int file_count;
 };
 
 const GameVersion* GetGameVersion(EVersion version);
-const paf::vector<GameVersion>& GetAllVersions();
+
+extern const GameVersion gameVersions[];
+extern const int gameVersionsCount;

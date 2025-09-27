@@ -22,7 +22,7 @@ class VerifyJob : public paf::job::JobItem {
     paf::string cd_folder;
     paf::string disk_folder;
 
-    int verifyFile(const GameFile& file, EVerifyResult& result, std::function<void(uint64_t, float)> OnFileProgress);
+    int verifyFile(const GameFile* file, EVerifyResult& result, std::function<void(uint64_t, float)> OnFileProgress);
 public:
     std::function<void(const paf::string&)> OnFileStart;
     std::function<void(int, int, int)> OnFileVerified;

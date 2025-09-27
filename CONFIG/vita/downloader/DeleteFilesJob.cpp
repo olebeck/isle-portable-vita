@@ -29,19 +29,25 @@ int32_t DeleteFilesJob::Run()
 	auto installedVer = GetGameVersion(this->installed_version);
 
 	paf::vector<const GameFile*> filesToDelete;
-	for (const auto& file1 : installedVer->files) {
+	for (int i = 0; i < installedVer->file_count; i++) {
+		const GameFile* installed_file = &installedVer->files[i];
 		bool do_delete = true;
-		for (const auto& file2 : selectedVer->files) {
-			bool is_same = file1.folder == file2.folder && file1.filename == file2.filename;
+		for (int j = 0; j < selectedVer->file_count; j++) {
+			const GameFile* selected_file = &selectedVer->files[i];
+			bool is_same =
+				installed_file->folder == selected_file->folder && installed_file->filename == selected_file->filename;
 			if (is_same) {
-				if (file1.sha1 == file2.sha1) {
+				if (installed_file->sha1 == selected_file->sha1) {
 					do_delete = false;
 					break;
 				}
 				do_delete = true;
 			}
 		}
-		filesToDelete.push_back(&file1);
+		if (!do_delete) {
+			continue;
+		}
+		filesToDelete.push_back(installed_file);
 	}
 
 	int i = 0;

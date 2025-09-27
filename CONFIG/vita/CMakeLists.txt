@@ -74,9 +74,9 @@ vita_create_self(isle-config.self isle-config
 ## isle downloader
 
 add_executable(isle-downloader
-  downloader/paf_main.cpp
-  downloader/paf_loader.cpp  
+  downloader/paf_runtime.cpp  
 
+  downloader/main.cpp
   downloader/App.cpp
   downloader/GameFiles.cpp
   downloader/Page.cpp
@@ -125,7 +125,7 @@ target_link_libraries(isle-downloader PRIVATE
   ScePafMisc_stub
   SceCommonGuiDialog_stub
   # other
-  iniparser_paf
+  iniparser_paf-static
   gcc
 )
 
@@ -135,9 +135,6 @@ vita_create_self(isle-downloader.self isle-downloader
   STRIPPED
   REL_OPTIMIZE
 )
-
-
-## compile rcos
 
 include(${scepaf_external_SOURCE_DIR}/rco.cmake)
 make_rco(cxml/config_plugin.xml config_plugin.rco)

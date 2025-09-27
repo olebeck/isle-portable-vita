@@ -135,19 +135,25 @@ void App::DetectVersion()
 		this->installed_version = EVersion::None;
 	}
 	else {
-		for (const auto& gameVersion : GetAllVersions()) {
+		for (int i = 0; i < gameVersionsCount; i++) {
+			const GameVersion* gameVersion = &gameVersions[i];
+
 			const GameFile* gameFile = nullptr;
-			for (const auto& file : gameVersion.files) {
-				if (file.filename == "Lego/Scripts/NOCD.SI") {
-					gameFile = &file;
+			for (int i = 0; i < gameVersion->file_count; i++) {
+				if (gameVersion->files[i].filename == "Lego/Scripts/NOCD.SI") {
+					gameFile = &gameVersion->files[i];
 				}
+			}
+			if (gameFile == nullptr) {
+				sceClibPrintf("NOCD missing from list?\n");
+				continue;
 			}
 
 			uint8_t hash2[20];
 			hexDecode(gameFile->sha1, hash2);
 			bool eq = sce_paf_memcmp(hash1.data(), hash2, hash1.size()) == 0;
 			if (eq) {
-				this->installed_version = gameVersion.version;
+				this->installed_version = gameVersion->version;
 				break;
 			}
 		}
@@ -183,14 +189,15 @@ void App::ScanFolders(EVersion version, paf::vector<const GameFile*>& missing_fi
 		return;
 	}
 
-	for (const GameFile& file : gameVersion->files) {
-		paf::vector<paf::string>* found_files = (file.folder == EDir::CD) ? &found_cd_files : &found_disk_files;
-		bool missing = paf::find(found_files->begin(), found_files->end(), file.filename) == found_files->end();
+	for (int i = 0; i < gameVersion->file_count; i++) {
+		const GameFile* file = &gameVersion->files[i];
+		paf::vector<paf::string>* found_files = (file->folder == EDir::CD) ? &found_cd_files : &found_disk_files;
+		bool missing = paf::find(found_files->begin(), found_files->end(), file->filename) == found_files->end();
 		if (missing || always_download) {
-			missing_files.push_back(&file);
+			missing_files.push_back(file);
 		}
 		else {
-			installed_size += file.size;
+			installed_size += file->size;
 		}
 	}
 	sceClibPrintf("Missing %d files\ninstalled_size: %lld\n", missing_files.size(), installed_size);
@@ -226,8 +233,8 @@ bool App::StartDownload(EVersion version)
 	}
 
 	uint64_t data_todo = 0;
-	for (const auto& gameFile : gameVersion->files) {
-		data_todo += gameFile.size;
+	for (int i = 0; i < gameVersion->file_count; i++) {
+		data_todo += gameVersion->files[i].size;
 	}
 	data_todo -= installed_size;
 
